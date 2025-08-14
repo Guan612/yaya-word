@@ -1,7 +1,5 @@
-# Tauri + React + Typescript
+# 鸭鸭背单词
+全平台背单词应用，使用tauri2开发
 
-This template should help get you started developing with Tauri, React and Typescript in Vite.
-
-## Recommended IDE Setup
-
-- [VS Code](https://code.visualstudio.com/) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
+## 技术栈
+react+zustand+vite+tauri2

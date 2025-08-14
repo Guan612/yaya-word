@@ -1,7 +1,8 @@
 import { useState } from "react";
 import reactLogo from "./assets/react.svg";
 import { invoke } from "@tauri-apps/api/core";
-import "./App.css";
+import Button from "@mui/material/Button";
+import TextField from "@mui/material/TextField";
 
 function App() {
   const [greetMsg, setGreetMsg] = useState("");
@@ -13,8 +14,8 @@ function App() {
   }
 
   return (
-    <main className="container">
-      <h1>Welcome to Tauri + React</h1>
+    <main className="flex flex-col items-center justify-center h-screen">
+      <h1 className="font-bold">Welcome to Tauri + React</h1>
 
       <div className="row">
         <a href="https://vite.dev" target="_blank">
@@ -30,18 +31,19 @@ function App() {
       <p>Click on the Tauri, Vite, and React logos to learn more.</p>
 
       <form
-        className="row"
+        className="flex flex-row"
         onSubmit={(e) => {
           e.preventDefault();
           greet();
         }}
       >
-        <input
+        <TextField
           id="greet-input"
+          className="mx-1"
           onChange={(e) => setName(e.currentTarget.value)}
           placeholder="Enter a name..."
         />
-        <button type="submit">Greet</button>
+        <Button variant="contained">Greet</Button>
       </form>
       <p>{greetMsg}</p>
     </main>
