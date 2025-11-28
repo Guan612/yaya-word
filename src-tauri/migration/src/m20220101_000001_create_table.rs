@@ -2,7 +2,6 @@ use sea_orm_migration::{prelude::*, schema::*, sea_orm::ActiveEnum};
 
 // 从主 crate 导入我们刚刚移动的 Source enum
 // 注意：main_lib 是 sea-orm-cli 约定的名称，代表你的主 src/lib.rs 或 src/main.rs
-use yaya_word_lib::entities::source_enum::Source;
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;

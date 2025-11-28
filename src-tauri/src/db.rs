@@ -1,6 +1,7 @@
 use std::fs;
 
-use sea_orm::{Database, DatabaseConnection, DbErr};
+use migration::{Migrator, MigratorTrait};
+use sea_orm::{ConnectionTrait, Database, DatabaseBackend, DatabaseConnection, DbErr, Statement};
 use tauri::{AppHandle, Manager};
 
 pub async fn init(app_hadle: &AppHandle) -> Result<DatabaseConnection, DbErr> {
@@ -27,6 +28,53 @@ pub async fn init(app_hadle: &AppHandle) -> Result<DatabaseConnection, DbErr> {
     let db = Database::connect(&db_url).await?;
     println!("Database connected at: {}", db_url);
 
+    println!("Running migrations...");
+    Migrator::up(&db, None).await?;
+    println!("Migrations applied.");
+
     // 5. 返回数据库连接池
     Ok(db)
+}
+
+//插入假数据函数
+pub async fn seed(db: &DatabaseConnection) -> Result<(), DbErr> {
+    let count_res = db
+        .query_one(Statement::from_string(
+            DatabaseBackend::Sqlite,
+            "SELECT count(*) as count FROM master_word",
+        ))
+        .await?;
+
+    let count = count_res
+        .map(|res| {
+            // 尝试获取 count 列，不同数据库驱动返回类型可能不同，这里做一个简化的处理
+            res.try_get::<i64>("", "count").unwrap_or(0)
+        })
+        .unwrap_or(0);
+
+    if count > 0 {
+        println!("Database already has data ({} rows), skipping seed.", count);
+        return Ok(());
+    }
+
+    println!("Database is empty. Seeding test data...");
+
+    let sql = r#"
+    INSERT INTO master_word (text, definition, source, created_at)
+    VALUES
+        ('apple', 'n. 苹果', 'ElementarySchool', datetime('now')),
+        ('banana', 'n. 香蕉', 'ElementarySchool', datetime('now')),
+        ('abandon', 'v. 放弃', 'CET4', datetime('now')),
+        ('tauri', 'n. 一个构建跨平台应用的框架', 'Custom', datetime('now'));
+    "#;
+
+    // 3. 执行插入
+    db.execute(Statement::from_string(
+        DatabaseBackend::Sqlite,
+        sql
+    )).await?;
+
+    println!("✅ Test data seeded successfully!");
+
+    Ok(())
 }

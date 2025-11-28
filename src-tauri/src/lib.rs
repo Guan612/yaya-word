@@ -23,6 +23,9 @@ pub fn run() {
                     .await
                     .expect("Database initialization failed");
 
+                //注入数据
+                db::seed(&db_conn).await.expect("Failed to seed database");
+
                 // 将数据库连接池放入 Tauri 的状态管理器中
                 handle.manage(db_conn);
             });

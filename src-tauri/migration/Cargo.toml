@@ -11,8 +11,6 @@ path = "src/lib.rs"
 [dependencies]
 async-std = { version = "1", features = ["attributes", "tokio1"] }
 
-yaya-word = { path = ".." } # 注意库的名字首先是包名
-
 [dependencies.sea-orm-migration]
 version = "1.1.0"
 features = [
