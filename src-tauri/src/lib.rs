@@ -32,7 +32,10 @@ pub fn run() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![commands::get_all_master_words])
+        .invoke_handler(tauri::generate_handler![
+            commands::get_all_master_words,
+            commands::add_word_to_learning
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
