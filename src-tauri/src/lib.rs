@@ -1,11 +1,35 @@
+use tauri::Manager;
+
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-mod models;
+mod commands;
+mod db;
 pub mod entities;
+pub mod error;
+mod models;
+mod services;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .setup(|app| {
+            // 获取 AppHandle 的克隆，以便在异步块中使用
+            let handle = app.handle().clone();
+
+            // 使用 Tauri 提供的 block_on 来同步执行我们的异步初始化代码
+            tauri::async_runtime::block_on(async move {
+                // 调用 db::init 函数并等待它完成
+                let db_conn = db::init(&handle)
+                    .await
+                    .expect("Database initialization failed");
+
+                // 将数据库连接池放入 Tauri 的状态管理器中
+                handle.manage(db_conn);
+            });
+
+            Ok(())
+        })
+        .invoke_handler(tauri::generate_handler![commands::get_all_master_words])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    yaya_word_lib::run()
+    yaya_word_lib::run();
 }
