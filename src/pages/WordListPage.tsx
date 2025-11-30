@@ -10,11 +10,16 @@ import {
   CircularProgress,
   Chip,
   Divider,
+  Tooltip,
+  IconButton,
 } from "@mui/material";
+
+import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 
 export default function WordListPage() {
   // 从 Store 中解构出我们需要的数据和方法
-  const { masterWords, isLoading, error, fetchMasterWords } = useWordStore();
+  const { masterWords, isLoading, error, fetchMasterWords, addToLearning } =
+    useWordStore();
 
   // 组件挂载时，自动拉取数据
   useEffect(() => {
@@ -46,7 +51,21 @@ export default function WordListPage() {
         <List>
           {masterWords.map((word, index) => (
             <div key={word.id}>
-              <ListItem className="hover:bg-gray-50 transition-colors">
+              <ListItem
+                className="hover:bg-gray-50 transition-colors"
+                secondaryAction={
+                  <Tooltip title="加入学习计划">
+                    <IconButton
+                      edge="end"
+                      aria-label="add"
+                      color="primary"
+                      onClick={() => addToLearning(word.id)}
+                    >
+                      <AddCircleOutlineIcon />
+                    </IconButton>
+                  </Tooltip>
+                }
+              >
                 <ListItemText
                   primary={
                     <div className="flex items-center gap-3">

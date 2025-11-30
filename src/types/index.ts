@@ -15,3 +15,21 @@ export interface ApiError {
   DatabaseError?: string;
   // 其他可能的错误类型
 }
+
+// 【新增】对应 Rust 后端的 ReviewCard
+export interface ReviewCard {
+  id: number; // user_words 表的主键 (用于更新进度)
+  master_id: number; // 关联的主词 ID
+  text: string; // 单词
+  definition: string; // 释义
+  pronunciation?: string;
+  due: string; // 到期时间 ISO 字符串
+  stability: number;
+  difficulty: number;
+}
+
+export interface DashboardStats {
+  total_master: number;
+  total_learning: number;
+  due_today: number;
+}
