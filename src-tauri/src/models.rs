@@ -1,5 +1,8 @@
 use serde::{Deserialize, Serialize};
 
+use crate::entities::master_word;
+use crate::entities::user_word;
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Word {
     pub id: i64,
@@ -16,4 +19,39 @@ pub struct Word {
     // --- 附加信息 ---
     pub notes: Option<String>,                     // 用户笔记
     pub created_at: chrono::DateTime<chrono::Utc>, // 创建时间
+}
+
+#[derive(Debug, Serialize)]
+pub struct ReviewCard {
+    pub id: i32,
+    pub stability: f32,
+    pub difficulty: f32,
+    pub due: String, //时间序列为字符串
+
+    // 来自 master_words 的内容信息
+    pub master_id: i32,
+    pub text: String,
+    pub definition: String,
+    pub pronunciation: Option<String>,
+}
+
+impl ReviewCard {
+    pub fn from_query_result(
+        user: user_word::Model,
+        master: Option<master_word::Model>,
+    ) -> Option<Self> {
+        let master = master?;
+
+        Some(Self {
+            id: user.id,
+            stability: user.stability,
+            difficulty: user.difficulty,
+            due: user.due.to_rfc3339(), // 转为 ISO 时间字符串
+
+            master_id: master.id,
+            text: master.text,
+            definition: master.definition,
+            pronunciation: master.pronunciation,
+        })
+    }
 }
