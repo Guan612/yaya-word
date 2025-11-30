@@ -1,6 +1,7 @@
 use tauri::Manager;
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
+mod algorithm;
 mod commands;
 mod db;
 pub mod entities;
@@ -34,7 +35,10 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             commands::get_all_master_words,
-            commands::add_word_to_learning
+            commands::add_word_to_learning,
+            commands::get_due_words,
+            commands::submit_review,
+            commands::get_dashboard_stats,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
