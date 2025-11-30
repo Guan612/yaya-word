@@ -1,7 +1,24 @@
 use chrono::Utc;
-use sea_orm::{ActiveModelTrait, ActiveValue::Set, DatabaseConnection, DbErr};
+use sea_orm::{
+    ActiveModelTrait,
+    ActiveValue::Set,
+    // 【关键】必须引入 ColumnTrait 才能使用 UserWord::Column::Due
+    ColumnTrait,
+    DatabaseConnection,
+    DbErr,
+    // 【关键】必须引入 EntityTrait 才能使用 .find()
+    EntityTrait,
+    // 【关键】必须引入 QueryFilter 才能使用 .filter()
+    QueryFilter,
+    // 【关键】必须引入 QueryOrder 才能使用 .order_by_asc()
+    QueryOrder,
+};
 
-use crate::entities::user_word;
+use crate::{
+    algorithm::{self, Rating},
+    entities::{master_word, prelude::UserWord, user_word},
+    models::Word,
+};
 
 pub async fn add_word_to_learning(
     db: &DatabaseConnection,
@@ -24,4 +41,45 @@ pub async fn add_word_to_learning(
     };
 
     new_learning_record.insert(db).await
+}
+
+// 【新增】获取今日需要复习的单词 (包含主词库的详细信息)
+// 返回值类型是: Vec<(UserWordModel, Option<MasterWordModel>)>
+// SeaORM 的 find_also_related 会返回一个元组
+
+pub async fn get_due_words(
+    db: &DatabaseConnection,
+) -> Result<Vec<(user_word::Model, Option<master_word::Model>)>, DbErr> {
+    UserWord::find()
+        .filter(user_word::Column::Due.lte(Utc::now()))
+        .order_by_asc(user_word::Column::Due)
+        .find_also_related(master_word::Entity)
+        .all(db)
+        .await
+}
+
+pub async fn submit_review(
+    db: &DatabaseConnection,
+    user_word_id: i32,
+    rating_val: i32,
+) -> Result<(), DbErr> {
+    let word_model = UserWord::find_by_id(user_word_id)
+        .one(db)
+        .await?
+        .ok_or(DbErr::RecordNotFound("Word not found".to_owned()))?;
+    let rating = Rating::from_i32(rating_val).unwrap_or(Rating::Good);
+    let result =
+        algorithm::calculate_next_review(word_model.stability, word_model.difficulty, rating);
+
+    let mut active_model: user_word::ActiveModel = word_model.into();
+
+    active_model.stability = Set(result.new_stability);
+    active_model.difficulty = Set(result.new_difficulty);
+    active_model.due = Set(result.next_due.into());
+    active_model.last_review = Set(Some(Utc::now().into()));
+
+    active_model.status = Set(1);
+    active_model.update(db).await?;
+
+    Ok(())
 }
