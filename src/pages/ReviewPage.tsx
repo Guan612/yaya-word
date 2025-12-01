@@ -7,11 +7,15 @@ import {
   CircularProgress,
   Box,
   Chip,
+  IconButton,
 } from "@mui/material";
+import useTTS from "../hooks/useTTS";
+import { GraphicEq } from "@mui/icons-material";
 
 export default function ReviewPage() {
   const { reviewQueue, isLoading, error, fetchDueWords, submitReview } =
     useWordStore();
+  const { speak } = useTTS();
 
   // 本地状态：当前是否显示了答案
   const [showAnswer, setShowAnswer] = useState(false);
@@ -23,6 +27,13 @@ export default function ReviewPage() {
   useEffect(() => {
     fetchDueWords();
   }, [fetchDueWords]);
+
+  // 【新增】当显示答案时，自动朗读 (可选功能，体验很好)
+  useEffect(() => {
+    if (showAnswer && reviewQueue[currentIndex]) {
+      speak(reviewQueue[currentIndex].text);
+    }
+  }, [showAnswer, currentIndex, reviewQueue, speak]);
 
   const handleNext = (rating: number) => {
     setShowAnswer(false);
@@ -71,9 +82,23 @@ export default function ReviewPage() {
         className="w-full max-w-md p-10 text-center rounded-2xl flex flex-col items-center min-h-[300px] justify-center"
       >
         {/* 正面：单词 */}
-        <Typography variant="h3" className="font-bold text-gray-800 mb-2">
-          {currentCard.text}
-        </Typography>
+        <div className="flex items-center gap-2 justify-center mb-2">
+          <Typography variant="h3" className="font-bold text-gray-800">
+            {currentCard.text}
+          </Typography>
+
+          {/* 【新增】手动朗读按钮 */}
+          <IconButton
+            onClick={(e) => {
+              e.stopPropagation(); // 防止触发其他点击事件
+              speak(currentCard.text, currentCard.audio_url);
+            }}
+            color="primary"
+            size="large"
+          >
+            <GraphicEq fontSize="inherit" />
+          </IconButton>
+        </div>
 
         {currentCard.pronunciation && (
           <Typography

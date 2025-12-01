@@ -15,11 +15,14 @@ import {
 } from "@mui/material";
 
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
+import { GraphicEq } from "@mui/icons-material";
+import useTTS from "../hooks/useTTS";
 
 export default function WordListPage() {
   // 从 Store 中解构出我们需要的数据和方法
   const { masterWords, isLoading, error, fetchMasterWords, addToLearning } =
     useWordStore();
+  const { speak } = useTTS();
 
   // 组件挂载时，自动拉取数据
   useEffect(() => {
@@ -69,6 +72,14 @@ export default function WordListPage() {
                 <ListItemText
                   primary={
                     <div className="flex items-center gap-3">
+                      {/* 【新增】朗读小按钮 */}
+                      <IconButton
+                        size="small"
+                        onClick={() => speak(word.text, word.audio_url)}
+                        className="text-gray-400 hover:text-blue-500"
+                      >
+                        <GraphicEq fontSize="small" />
+                      </IconButton>
                       <span className="text-xl font-semibold text-blue-700">
                         {word.text}
                       </span>
