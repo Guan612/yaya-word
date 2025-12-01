@@ -66,7 +66,12 @@ pub fn calculate_next_review(
         }
     }
 
-    let next_due = Utc::now() + Duration::minutes((s * 24.0 * 60.0) as i64);
+    //修改忘记算法
+    let next_due = if let Rating::Again = rating {
+        Utc::now() + Duration::seconds(3)
+    } else {
+        Utc::now() + Duration::minutes((s * 24.0 * 60.0) as i64)
+    };
 
     ReviewResult {
         new_stability: s,
