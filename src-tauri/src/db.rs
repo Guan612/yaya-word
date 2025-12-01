@@ -62,17 +62,15 @@ pub async fn seed(db: &DatabaseConnection) -> Result<(), DbErr> {
     let sql = r#"
     INSERT INTO master_word (text, definition, source, created_at)
     VALUES
-        ('apple', 'n. 苹果', 'ElementarySchool', datetime('now')),
-        ('banana', 'n. 香蕉', 'ElementarySchool', datetime('now')),
-        ('abandon', 'v. 放弃', 'CET4', datetime('now')),
-        ('tauri', 'n. 一个构建跨平台应用的框架', 'Custom', datetime('now'));
+        ('apple', 'n. 苹果', 'ElementarySchool','apple.mp3', datetime('now')),
+        ('banana', 'n. 香蕉', 'ElementarySchool', 'banana.mp3',datetime('now')),
+        ('abandon', 'v. 放弃', 'CET4',NULL, datetime('now')),
+        ('tauri', 'n. 一个构建跨平台应用的框架', 'Custom', NULL,datetime('now'));
     "#;
 
     // 3. 执行插入
-    db.execute(Statement::from_string(
-        DatabaseBackend::Sqlite,
-        sql
-    )).await?;
+    db.execute(Statement::from_string(DatabaseBackend::Sqlite, sql))
+        .await?;
 
     println!("✅ Test data seeded successfully!");
 
