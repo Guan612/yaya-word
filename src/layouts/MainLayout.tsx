@@ -89,7 +89,7 @@ export default function MainLayout() {
         >
           <div className="h-16 flex items-center justify-center border-b border-gray-100">
             <Typography variant="h5" className="font-bold text-blue-600">
-              Yaya Word
+              鸭鸭单词
             </Typography>
           </div>
           <List className="mt-2">
