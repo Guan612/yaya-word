@@ -31,6 +31,7 @@ pub struct ReviewCard {
     // 来自 master_words 的内容信息
     pub master_id: i32,
     pub text: String,
+    pub audio_url: Option<String>,
     pub definition: String,
     pub pronunciation: Option<String>,
 }
@@ -50,6 +51,7 @@ impl ReviewCard {
 
             master_id: master.id,
             text: master.text,
+            audio_url: master.audio_url,
             definition: master.definition,
             pronunciation: master.pronunciation,
         })
