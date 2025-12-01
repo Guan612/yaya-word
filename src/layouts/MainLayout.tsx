@@ -67,7 +67,7 @@ export default function MainLayout() {
       >
         <Toolbar>
           <Typography variant="h6" noWrap component="div" className="font-bold">
-            Yaya Word
+            鸭鸭单词
           </Typography>
         </Toolbar>
       </AppBar>
