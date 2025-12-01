@@ -6,7 +6,14 @@ export const dueWordsAPI = () => {
 };
 
 export const masterWordsAPI = () => {
-    return invoke<MasterWord[]>("get_all_master_words");
+  return invoke<MasterWord[]>("get_all_master_words");
+};
+
+export const masterWordsByFristLetterAPI = (letter?: string) => {
+  // 传入 Option<String> 给 Rust，对应 JS 的 string | null
+  return invoke<MasterWord[]>("get_master_word_by_first_letter", {
+    letter: letter || null,
+  });
 };
 
 export const dashboardStatsAPI = () => {

@@ -6,38 +6,49 @@ import {
   dashboardStatsAPI,
   dueWordsAPI,
   masterWordsAPI,
+  masterWordsByFristLetterAPI,
   submitReviewAPI,
 } from "../api";
 
 interface WordState {
   masterWords: MasterWord[];
   reviewQueue: ReviewCard[];
+  currentLetter: string;
   stats: DashboardStats | null;
   isLoading: boolean;
   error: string | null;
 
   // Actions
-  fetchMasterWords: () => Promise<void>;
+  fetchMasterWords: (letter?: string) => Promise<void>;
   //添加学习任务
   addToLearning: (masterId: number) => Promise<void>;
   //拉取学习任务
   fetchDueWords: () => Promise<void>;
   submitReview: (userWordId: number, ratingVal: number) => Promise<void>;
   fetchStats: () => void;
+  // 【新增】设置当前字母并刷新数据
+  setLetter: (letter: string) => void;
 }
 
-export const useWordStore = create<WordState>((set) => ({
+export const useWordStore = create<WordState>((set, get) => ({
   masterWords: [],
   reviewQueue: [],
   stats: null,
   isLoading: false,
   error: null,
+  currentLetter: "A",
 
-  fetchMasterWords: async () => {
+  setLetter: (letter: string) => {
+    set({ currentLetter: letter });
+    // 切换字母后，立即拉取新数据
+    get().fetchMasterWords(letter);
+  },
+
+  fetchMasterWords: async (letter) => {
     set({ isLoading: true, error: null });
     try {
-      const words = await masterWordsAPI();
-      console.log("Fetched words:", words); // 调试用
+      const targetLetter = letter || get().currentLetter;
+      const words = await masterWordsByFristLetterAPI(targetLetter);
       set({ masterWords: words, isLoading: false });
     } catch (err) {
       console.error("Failed to fetch words:", err);

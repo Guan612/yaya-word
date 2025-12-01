@@ -23,6 +23,15 @@ pub async fn get_all_master_words(
 }
 
 #[tauri::command]
+pub async fn get_master_word_by_first_letter(
+    db: State<'_, DatabaseConnection>,
+    letter: Option<String>,
+) -> Result<Vec<master_word::Model>, ApiError> {
+    let words = master_word_service::get_master_word_by_first_letter(&db, letter).await?;
+    Ok(words)
+}
+
+#[tauri::command]
 pub async fn add_word_to_learning(
     db: State<'_, DatabaseConnection>,
     master_id: i32,

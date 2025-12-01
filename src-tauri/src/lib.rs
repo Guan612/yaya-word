@@ -36,6 +36,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             commands::get_all_master_words,
+            commands::get_master_word_by_first_letter,
             commands::add_word_to_learning,
             commands::get_due_words,
             commands::submit_review,
