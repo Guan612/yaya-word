@@ -18,7 +18,10 @@
       }
     ],
     "security": {
-      "csp": null
+      "csp": {
+        "default-src": "'self'",
+        "connect-src": "'self' http://* https://*"
+      }
     }
   },
   "bundle": {
@@ -30,6 +33,7 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "resources": ["resources/**/*"]
   }
 }
