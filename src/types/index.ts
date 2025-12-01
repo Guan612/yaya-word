@@ -20,6 +20,7 @@ export interface ApiError {
 export interface ReviewCard {
   id: number; // user_words 表的主键 (用于更新进度)
   master_id: number; // 关联的主词 ID
+  audio_url?: string;
   text: string; // 单词
   definition: string; // 释义
   pronunciation?: string;
