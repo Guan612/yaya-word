@@ -10,7 +10,15 @@
     "fs:allow-resource-read-recursive",
     {
       "identifier": "fs:allow-app-write-recursive",
-      "allow": [{ "path": "$RESOURCE/**" }]
-    }
+      "allow": [
+        {
+          "path": "$RESOURCE/**"
+        }
+      ]
+    },
+    "store:allow-get",
+    "store:allow-set",
+    "store:allow-save",
+    "store:allow-load"
   ]
 }
