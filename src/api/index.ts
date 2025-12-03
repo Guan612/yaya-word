@@ -35,3 +35,15 @@ export const submitReviewAPI = (ratingVal: number, userWordId: number) => {
     ratingVal: ratingVal,
   });
 };
+
+export const getWordsListFiliterAPI = (page: number, limit: number = 20) => {
+  return invoke<MasterWord[]>("get_words_list_filiter", { page, limit });
+};
+
+export const searchWordsAPI = (keyword: string) => {
+  return invoke<MasterWord[]>("search_master_words", { keyword });
+};
+
+export const generateNewWordsAPI = (limit: number) => {
+  return invoke<number>("generate_new_words", { limit });
+};
