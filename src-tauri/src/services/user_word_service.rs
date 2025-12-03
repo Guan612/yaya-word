@@ -1,5 +1,6 @@
 use chrono::Utc;
 use sea_orm::{
+    sea_query::Expr,
     ActiveModelTrait,
     ActiveValue::Set,
     // 【关键】必须引入 ColumnTrait 才能使用 UserWord::Column::Due
@@ -12,11 +13,12 @@ use sea_orm::{
     QueryFilter,
     // 【关键】必须引入 QueryOrder 才能使用 .order_by_asc()
     QueryOrder,
+    QuerySelect,
 };
 
 use crate::{
     algorithm::{self, Rating},
-    entities::{master_word, prelude::UserWord, user_word},
+    entities::{master_word, prelude::MasterWord, prelude::UserWord, user_word},
     models::Word,
 };
 
@@ -82,4 +84,46 @@ pub async fn submit_review(
     active_model.update(db).await?;
 
     Ok(())
+}
+
+pub async fn generate_daily_new_words(db: &DatabaseConnection, limit: u64) -> Result<u64, DbErr> {
+    let learned_ids: Vec<i32> = UserWord::find()
+        .select_only()
+        .column(user_word::Column::MasterWordId)
+        .into_tuple()
+        .all(db)
+        .await?;
+
+    // 2. 从 master_words 中随机抽取 'limit' 个不在 learned_ids 中的单词
+    // 注意：SQLite 的随机排序是 ORDER BY RANDOM()
+    let new_words = MasterWord::find()
+        .filter(master_word::Column::Id.is_not_in(learned_ids))
+        .order_by_asc(Expr::cust("RANDOM()".to_string()))
+        .limit(limit)
+        .all(db)
+        .await?;
+
+    if new_words.is_empty() {
+        return Ok(0); // 没词了
+    };
+
+    // 3. 批量插入到 user_words 表
+    let mut active_models = Vec::new();
+
+    for word in &new_words {
+        active_models.push(user_word::ActiveModel {
+            master_word_id: Set(word.id),
+            stability: Set(0.0), // 初始状态
+            difficulty: Set(0.0),
+            due: Set(Utc::now().into()), // 设为立即到期，这样 get_due_words 就能查到了
+            status: Set(0),              // 0 = New
+            last_review: Set(None),
+            added_at: Set(Utc::now().into()),
+            ..Default::default()
+        });
+    }
+
+    UserWord::insert_many(active_models).exec(db).await?;
+
+    Ok(new_words.len() as u64)
 }
