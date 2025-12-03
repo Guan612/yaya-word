@@ -2,7 +2,9 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "Capability for the main window",
-  "windows": ["main"],
+  "windows": [
+    "main"
+  ],
   "permissions": [
     "core:default",
     "opener:default",
@@ -20,6 +22,7 @@
     "store:allow-set",
     "store:allow-save",
     "store:allow-load",
-    "tts:allow-speak"
+    "tts:allow-speak",
+    "os:default"
   ]
 }
