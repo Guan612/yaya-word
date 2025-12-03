@@ -5123,6 +5123,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "tauri-plugin-tts"
+version = "0.2.0"
+source = "git+https://github.com/httpjamesm/tauri-plugin-tts.git#90360c9665a1c1337ed658fcdeccc87053cb1dda"
+dependencies = [
+ "serde",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin",
+ "thiserror 2.0.17",
+]
+
+[[package]]
 name = "tauri-runtime"
 version = "2.9.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6695,6 +6707,7 @@ dependencies = [
  "tauri-plugin-fs",
  "tauri-plugin-opener",
  "tauri-plugin-store",
+ "tauri-plugin-tts",
 ]
 
 [[package]]

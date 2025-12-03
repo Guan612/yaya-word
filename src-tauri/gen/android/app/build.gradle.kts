@@ -24,12 +24,34 @@ android {
         versionCode = tauriProperties.getProperty("tauri.android.versionCode", "1").toInt()
         versionName = tauriProperties.getProperty("tauri.android.versionName", "1.0")
     }
+    // 1. 添加签名配置块
+    signingConfigs {
+        create("release") {
+            // 1. 获取 local.properties 文件对象
+            val localProperties = Properties()
+            val localPropertiesFile = rootProject.file("local.properties")
+            
+            // 2. 如果文件存在，就加载它
+            if (localPropertiesFile.exists()) {
+                localProperties.load(localPropertiesFile.inputStream())
+            }
+
+            // 3. 读取字段 (如果没读到就给个空字符串，防止报错)
+            storeFile = file(localProperties.getProperty("release.store.path") ?: "keystore.jks")
+            storePassword = localProperties.getProperty("release.store.password")
+            keyAlias = localProperties.getProperty("release.key.alias")
+            keyPassword = localProperties.getProperty("release.key.password")
+        }
+    }
     buildTypes {
-        getByName("debug") {
+        getByName("release") {
             manifestPlaceholders["usesCleartextTraffic"] = "true"
             isDebuggable = true
             isJniDebuggable = true
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            if (rootProject.file("local.properties").exists()) {
+                 signingConfig = signingConfigs.getByName("release")
+            }
             packaging {                jniLibs.keepDebugSymbols.add("*/arm64-v8a/*.so")
                 jniLibs.keepDebugSymbols.add("*/armeabi-v7a/*.so")
                 jniLibs.keepDebugSymbols.add("*/x86/*.so")

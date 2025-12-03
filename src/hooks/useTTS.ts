@@ -8,7 +8,7 @@ const useTTs = () => {
 
   useEffect(() => {
     const loadVoices = () => {
-      const available = window.speechSynthesis.getVoices();
+      const available = window.speechSynthesis?.getVoices() || [];
       setVoices(available);
     };
 
