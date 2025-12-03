@@ -1,92 +1,114 @@
-import { useCallback, useEffect, useState } from "react";
-import { resolveResource } from "@tauri-apps/api/path";
-import { convertFileSrc } from "@tauri-apps/api/core";
-import { exists } from "@tauri-apps/plugin-fs";
+// src/hooks/useTTS.ts
 
-const useTTs = () => {
+import { useCallback, useEffect, useState, useRef } from "react";
+import { platform } from "@tauri-apps/plugin-os";
+import { invoke } from "@tauri-apps/api/core";
+
+export const useTTS = () => {
+  // 仅桌面端需要用到的状态
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const [isMobile, setIsMobile] = useState<boolean>(false);
+  
+  // 使用 useRef 避免闭包陷阱，保证在回调中能拿到最新的 voices
+  const voicesRef = useRef<SpeechSynthesisVoice[]>([]);
 
+  // 1. 初始化：检测平台并根据平台执行不同的初始化逻辑
   useEffect(() => {
+    const osName = platform();
+    const _isMobile = osName === 'android' || osName === 'ios';
+    setIsMobile(_isMobile);
+    console.log(`TTS Engine Strategy: ${_isMobile ? 'Native Plugin' : 'Web Speech API'}`);
+
+    // 【优化点 1】如果是移动端，直接结束，完全不触碰浏览器 TTS API，避免任何潜在报错
+    if (_isMobile) return;
+
+    // --- 以下仅在桌面端执行 ---
+    const synth = window.speechSynthesis;
+    if (!synth) {
+      console.warn("Web Speech API not supported.");
+      return;
+    }
+
     const loadVoices = () => {
-      const available = window.speechSynthesis?.getVoices() || [];
+      const available = synth.getVoices() || [];
       setVoices(available);
+      voicesRef.current = available; // 更新 ref
     };
 
-    // 先尝试加载一次
     loadVoices();
-
-    // 监听 Chrome 的异步加载
-    window.speechSynthesis.onvoiceschanged = loadVoices;
+    // 桌面端 Chrome 需要监听这个事件
+    try {
+      synth.onvoiceschanged = loadVoices;
+    } catch (e) {
+      // 忽略错误
+    }
 
     return () => {
-      window.speechSynthesis.onvoiceschanged = null; // 清理
+      if (synth) synth.onvoiceschanged = null;
     };
   }, []);
 
-  const speak = useCallback(
-    async (text: string, audioFileName?: string) => {
-      // 1. 停止当前正在播放的声音 (避免重叠)
-      window.speechSynthesis.cancel();
+  // 【优化点 2】抽取纯函数：寻找最佳语音 (桌面端专用)
+  const getPreferredVoice = (voiceList: SpeechSynthesisVoice[]) => {
+    return (
+      voiceList.find((v) => v.name.includes("Google US English")) ||
+      voiceList.find((v) => v.name.includes("US English")) ||
+      voiceList.find((v) => v.lang.startsWith("en"))
+    );
+  };
 
-      //优先尝试本地音频播放 好像暂时不行
-      //   if (audioFileName) {
-      //     try {
-      //       // A. 计算资源文件的真实路径
-      //       // 注意：Tauri 打包后，resources 目录结构会保持
-      //       const resourcePath = await resolveResource(
-      //         `resources/audio/${audioFileName}`
-      //       );
+  // 2. 核心发音函数
+  const speak = useCallback(async (text: string) => {
+    if (!text) return;
 
-      //       // B. 检查文件是否存在
-      //       if (await exists(resourcePath)) {
-      //         // 【修改】Windows 路径修复：把反斜杠 \ 强制替换为正斜杠 /
-      //         // 浏览器对 URL 中的 \ 兼容性不好，容易导致解析错误
-      //         //const safePath = resourcePath.replace(/\\/g, '/');
+    // --- 分支 A：移动端 (调用 Rust 插件) ---
+    if (isMobile) {
+      try {
+        await invoke("plugin:tts|speak", { text });
+      } catch (e) {
+        console.error("Native TTS failed:", e);
+      }
+      return;
+    }
 
-      //         //const assetUrl = convertFileSrc(safePath);
+    // --- 分支 B：桌面端 (调用浏览器 API) ---
+    const synth = window.speechSynthesis;
+    if (!synth) return;
 
-      //         // C. 将本地路径转换为浏览器可访问的 URL (asset://...)
-      //         const assetUrl = convertFileSrc(resourcePath);
+    try {
+      synth.cancel(); // 打断当前
 
-      //         // D. 播放
-      //         const audio = new Audio(assetUrl);
-      //         await audio.play();
-      //         return; // 播放成功，直接返回，不走 TTS
-      //       }
-      //     } catch (err) {
-      //       console.warn("Failed to play local audio:", err);
-      //     }
-      //   }
-      if (!text) return;
-      // 2. 创建发音请求
       const utterance = new SpeechSynthesisUtterance(text);
-
-      // 3. 尝试寻找最好的英文语音
-      // 优先级：Google US -> Microsoft US -> 任意英文 -> 默认
-      const preferredVoice =
-        voices.find((v) => v.name.includes("Google US English")) ||
-        voices.find((v) => v.name.includes("US English")) ||
-        voices.find((v) => v.lang.startsWith("en"));
-
-      if (preferredVoice) {
-        utterance.voice = preferredVoice;
+      
+      // 使用 ref 获取最新的语音列表，避免依赖 stale closure
+      const bestVoice = getPreferredVoice(voicesRef.current);
+      if (bestVoice) {
+        utterance.voice = bestVoice;
       }
 
-      // 设置一些参数 (语速、音调)
       utterance.rate = 1;
       utterance.pitch = 1;
 
-      // 4. 播放
-      window.speechSynthesis.speak(utterance);
-    },
-    [voices]
-  );
+      synth.speak(utterance);
+    } catch (e) {
+      console.error("Web Speech API failed:", e);
+    }
+  }, [isMobile]); // 依赖项非常少，性能更好
 
-  const cancel = useCallback(() => {
-    window.speechSynthesis.cancel();
-  }, []);
+  // 3. 取消播放
+  const cancel = useCallback(async () => {
+    if (isMobile) {
+      try {
+        // 尝试调用插件的停止方法 (假设插件支持 stop)
+        // await invoke("plugin:tts|stop");
+        // 注意：如果你用的插件不支持 stop，这里留空即可，或者查阅插件文档
+      } catch (e) {}
+    } else {
+      window.speechSynthesis?.cancel();
+    }
+  }, [isMobile]);
 
   return { speak, cancel };
 };
 
-export default useTTs;
+export default useTTS;
