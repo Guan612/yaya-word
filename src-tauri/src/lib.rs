@@ -12,6 +12,7 @@ mod services;
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
@@ -37,7 +38,10 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             commands::get_all_master_words,
             commands::get_master_word_by_first_letter,
+            commands::get_words_list_filiter,
+            commands::search_master_words,
             commands::add_word_to_learning,
+            commands::generate_new_words,
             commands::get_due_words,
             commands::submit_review,
             commands::get_dashboard_stats,
