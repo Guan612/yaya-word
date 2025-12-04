@@ -23,6 +23,7 @@
     "store:allow-save",
     "store:allow-load",
     "tts:allow-speak",
-    "os:default"
+    "os:default",
+    "notification:default"
   ]
 }
