@@ -28,6 +28,8 @@ interface WordState {
 
   dailyLimit: number; // 【新增】设置：每天学多少个
 
+  pushTime: number; //推送时间（小时）
+
   // Actions
   fetchMasterWords: (letter?: string) => Promise<void>;
   //添加学习任务
@@ -45,6 +47,7 @@ interface WordState {
   initSettings: () => Promise<void>; // 【新增】初始化加载
   setDailyLimit: (limit: number) => Promise<void>;
   startDailySession: () => Promise<void>; // 【核心】一键开始
+  setPushTime: (time: number) => Promise<void>; //设置推送时间
 }
 
 export const useWordStore = create<WordState>((set, get) => ({
@@ -58,6 +61,7 @@ export const useWordStore = create<WordState>((set, get) => ({
   hasMore: true,
   isSearching: false,
   dailyLimit: 15,
+  pushTime: 2,
 
   setLetter: (letter: string) => {
     set({ currentLetter: letter });
@@ -78,18 +82,22 @@ export const useWordStore = create<WordState>((set, get) => ({
       // 从 settings.json 读取
       const store = await getStore(); // 获取实例
       const savedLimit = await store.get<number>("daily_limit");
+      const savePushTime = await store.get<number>("push_time");
 
       // 如果读取到了，就更新状态
       if (savedLimit) {
-        console.log("Loaded settings:", savedLimit);
         set({ dailyLimit: savedLimit });
+      }
+
+      if (savePushTime) {
+        set({ pushTime: savePushTime });
       }
     } catch (err) {
       console.error("Failed to load settings:", err);
     }
   },
 
-  // 【新增】修改设置
+  // 【新增】修改每天记单词设置
   setDailyLimit: async (limit: number) => {
     // A. 更新内存状态 (让 UI 立即反应)
     set({ dailyLimit: limit });
@@ -99,6 +107,18 @@ export const useWordStore = create<WordState>((set, get) => ({
       const store = await getStore(); // 获取实例
       await store.set("daily_limit", limit);
       await store.save();
+    } catch (err) {
+      console.error("Failed to save settings:", err);
+    }
+  },
+
+  //设置推送时间
+  setPushTime: async (time: number) => {
+    set({ pushTime: time });
+    try {
+      const store = await getStore();
+      await store.set("push_time", time);
+      await store.save;
     } catch (err) {
       console.error("Failed to save settings:", err);
     }

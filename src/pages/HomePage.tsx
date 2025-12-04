@@ -13,6 +13,8 @@ import {
   DialogActions,
 } from "@mui/material";
 import PlayCircleFilledWhiteIcon from "@mui/icons-material/PlayCircleFilledWhite";
+import { dashboardStatsAPI } from "../api";
+import { sendStudyReminder } from "../utils/notification";
 
 export default function HomePage() {
   const {
@@ -22,18 +24,52 @@ export default function HomePage() {
     dailyLimit,
     setDailyLimit,
     initSettings,
+    pushTime,
   } = useWordStore();
   const navigate = useNavigate();
 
   // 控制设置弹窗
   const [openSettings, setOpenSettings] = useState(false);
   const [tempLimit, setTempLimit] = useState(dailyLimit);
+  const [wordCont, setWordCont] = useState(0);
 
   useEffect(() => {
     fetchStats();
     initSettings();
-    console.log(tempLimit);
   }, []);
+
+  useEffect(() => {
+    // App 启动时，先拉取一次状态
+    fetchStats();
+
+    // 设置一个定时轮询 (比如每 30 分钟)
+    const timer = setInterval(async () => {
+      // 重新拉取最新数据
+      // 注意：这里最好直接调用 API 获取返回值，而不是依赖 state 更新，这样逻辑更直接
+      // 假设你在 store 里把 API 暴露出来了，或者直接 import API
+      // 这里演示依赖 fetchStats 的副作用
+      const res = await dashboardStatsAPI();
+      setWordCont(res.due_today);
+    }, pushTime * 60 * 60 * 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  // 当 stats 更新时，判断是否需要提醒
+  useEffect(() => {
+    if (stats && stats.due_today > 0) {
+      // 这里需要一个防抖或者“已读”标记，否则每次刷新页面都会弹
+      // 简单策略：记录上一次提醒的时间到 localStorage
+      const lastRemind = localStorage.getItem("last_remind_time");
+      const now = Date.now();
+
+      // 如果距离上次提醒超过 4 小时，且有单词要背
+      if (!lastRemind || now - Number(lastRemind) > 4 * 60 * 60 * 1000) {
+        sendStudyReminder(wordCont);
+        localStorage.setItem("last_remind_time", String(now));
+      }
+    }
+  }, [stats]);
 
   // 点击“开始学习”
   const handleStart = async () => {
@@ -60,7 +96,7 @@ export default function HomePage() {
       {/* 顶部欢迎区 */}
       <div className="mb-8">
         <Typography variant="h4" className="font-bold text-gray-800">
-          早安，学习者！👋
+          你好，学习者！👋
         </Typography>
         <Typography className="text-gray-500 mt-1">
           今天也要保持进步。
